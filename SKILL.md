@@ -1,127 +1,216 @@
 ---
-name: memory-vault
-description: Structured memory system for Heyron agents. Auto-captures important info, organizes by category, enables fast recall across sessions.
+name: memory-companion
+description: An adaptive memory system that learns your preferences, auto-captures important details before context compression, and tailors itself to how you work.
 metadata:
   {
-    openclaw: { emoji: 🗄️, requires: { bins: [bash, jq, curl] } },
+    openclaw: { emoji: 🧠, requires: { bins: [bash, jq] } },
   }
 ---
 
-# Memory Vault
+# Memory Companion
 
-A drop-in skill that gives any Heyron agent a structured, searchable memory system.
+A drop-in skill that acts as your memory assistant — learns your preferences, auto-captures important info, and ensures nothing is lost to context compression.
 
 ## What It Does
 
-- **Auto-capture** — Tags important info (dates, numbers, decisions, action items) from conversations
-- **Structured storage** — Memories organized by category (people, projects, preferences, action_items, notes)
-- **Fast recall** — Search across all memory files with natural language queries
-- **Session continuity** — Summarizes prior session context when you wake up
+- **Auto-capture before compression** — Extracts key info (decisions, action items, facts) before context gets compressed
+- **User-defined triggers** — Captures what matters to YOU (dollar amounts, names, project keywords)
+- **Tailored setup** — First-run questionnaire customizes categories, keywords, and capture rules
+- **Session context on demand** — Get a summary of everything that happened before your next message
 
 ## Installation
 
-1. Drop this folder into `~/workspace/skills/memory-vault/`
-2. That's it — the skill commands are available immediately
+1. Drop this folder into `~/workspace/skills/memory-companion/`
+2. Run setup: `memory-companion setup`
+3. That's it — it learns as you use it
 
 ## Commands
 
-### `memory-vault capture`
+### `memory-companion setup`
 
-Capture a memory entry. Usage:
-
-```bash
-memory-vault capture --category people --content "John prefers email over calls" --tags email,preference
-```
-
-Options:
-- `--category` (required): people, projects, preferences, action_items, notes
-- `--content` (required): The memory text
-- `--tags` (optional): Comma-separated tags
-- `--importance` (optional): low, medium, high (default: medium)
-
-### `memory-vault recall`
-
-Search memories. Usage:
+First-run wizard. Asks questions to tailor the skill to you:
 
 ```bash
-memory-vault recall "John preference"
+memory-companion setup
 ```
 
-Returns matching entries with relevance scores.
+Asks:
+- What categories matter to you? (people, projects, tasks, finances, etc.)
+- What keywords should trigger capture? (defaults: remember, don't forget, let's do, $$)
+- How important is auto-capture? (aggressive, balanced, minimal)
 
-### `memory-vault session-summary`
+### `memory-companion remember "<thing>"`
 
-Get a summary of the prior session. Usage:
+Quick capture — works like you'd naturally say it:
 
 ```bash
-memory-vault session-summary
+memory-companion remember "John prefers detailed specs over quick summaries"
 ```
 
-Returns key decisions, action items, and recent context.
+Automatically extracts: people, preferences, context
 
-### `memory-vault stats`
+### `memory-companion capture --category <cat> --content "<stuff>"`
 
-Show memory statistics. Usage:
+Manual capture with explicit category:
 
 ```bash
-memory-vault stats
+memory-companion capture --category finances --content "Site costs $500/yr"
 ```
 
-Returns counts by category, total entries, last capture time.
+### `memory-companion recall "<query>"`
 
-## Auto-Capture (Optional)
+Search your memories:
 
-To enable automatic capture of "remember this" requests, add this to your SOUL.md:
-
+```bash
+memory-companion recall "John preference"
 ```
-## Memory Vault Integration
-When user says "remember this" or "don't forget", call:
-memory-vault capture --category notes --content "<the thing to remember>" --importance high
+
+### `memory-companion context`
+
+Get a summary of the current session — what was decided, what needs doing, key facts:
+
+```bash
+memory-companion context
 ```
+
+### `memory-companion status`
+
+Show what's being tracked:
+
+```bash
+memory-companion status
+```
+
+## How It Works
+
+### The Compression Problem
+
+Telegram/Discord chats lose context when messages get compressed. By the time you say "remember this", the details are already gone.
+
+### The Solution
+
+Memory Companion runs before each compression cycle and extracts:
+
+- **Decisions** — "We decided to go with Option B"
+- **Action items** — "I'll email the supplier"
+- **Key facts** — names, numbers, dates, URLs
+- **Files created** — anything new you mention
+
+### User-Defined Triggers
+
+You decide what triggers capture. Defaults:
+- "remember" / "don't forget" / "note this"
+- Dollar amounts (e.g., "$500")
+- Project names you specify
+- "let's do" / "action item"
+
+### Adaptive Learning
+
+The more you use it, the smarter it gets. It learns:
+- Your categories
+- Your naming conventions
+- What you consider important
 
 ## File Structure
 
 ```
-memory-vault/
-├── SKILL.md              # This file
-├── README.md             # Installation & usage
+memory-companion/
+├── SKILL.md
+├── README.md
 ├── scripts/
-│   ├── capture.sh        # Capture a memory
-│   ├── recall.sh         # Search memories
-│   ├── session-summary.sh # Summarize prior session
-│   └── stats.sh          # Show memory stats
-└── vault/
-    └── memories/         # Memory storage (created on first use)
+│   ├── setup.sh          # First-run questionnaire
+│   ├── config.sh        # User preferences (generated)
+│   ├── remember.sh      # Quick capture
+│   ├── capture.sh       # Manual capture with categories
+│   ├── recall.sh        # Search memories
+│   ├── context.sh      # Session summary
+│   ├── status.sh       # Show what's tracked
+│   └── auto-capture.sh # Background trigger watcher
+└── memory/
+    └── sessions/        # Where memories are stored
 ```
 
-## Examples
+## Setup Example
 
-**Capture a client preference:**
 ```bash
-memory-vault capture --category preferences --content "Client prefers detailed specs over quick summaries" --tags client,specs
+$ memory-companion setup
+
+Welcome to Memory Companion!
+Let's tailor this to how you work.
+
+What categories matter to you?
+(categories are separated by commas)
+[default: people, projects, tasks, finances, notes]
+> people, projects, finances, dogs
+
+What keywords should trigger auto-capture?
+(comma-separated, or press enter for defaults)
+[keywords: remember, don't forget, note this, let's do, action item, $ amount]
+> remember, don't forget, action item, budget, dogs
+
+How aggressive should auto-capture be?
+[1] Aggressive (captures almost everything)
+[2] Balanced (captures key items)
+[3] Minimal (only explicit triggers)
+> 2
+
+✓ Setup complete! Run 'memory-companion remember "<thing>"' to start.
 ```
 
-**Find all project-related entries:**
-```bash
-memory-vault recall "project timeline"
+## Usage Examples
+
+**Quick memory:**
+```
+user: "remember that the site renewal is $500/yr"
+→ extracts: $500/yr, renewal, site → saves to finances + notes
 ```
 
-**Get session summary:**
-```bash
-memory-vault session-summary
+**Manual capture:**
+```
+memory-companion capture --category projects --content "ROC MAFIA launch due May 1"
+```
+
+**Session context:**
+```
+$ memory-companion context
+
+=== Session Context ===
+
+Decisions:
+- Pooch Studios: Brighton vet space preferred
+- Memory Companion: rebuilding for hackathon
+
+Action Items:
+- Nick to call IRS tomorrow
+- Buddy to finish Memory Companion skill
+
+Key Facts:
+- Dog daycare: $40/day, $55/night
+- Startup capital: ~$145K
+- IRS payment issue pending
+
+Files/Links:
+- Pooch Studios spreadsheet
+- Vet space photos (indoor + outdoor kennels)
 ```
 
 ## Requirements
 
 - Bash 4+
 - jq (for JSON parsing)
-- curl (for web search integration)
 
 ## Portability
 
 This skill uses only existing OpenClaw tools:
-- `memory_get`, `memory_search` for storage
 - `read`, `write`, `exec` for file operations
-- No external dependencies beyond standard tools
+- No external dependencies
 
-Anyone can drop this into their workspace and start using it immediately.
+Drop into any Heyron workspace and run setup.
+
+## License
+
+MIT License
+
+## Author
+
+Built by Nick & Buddy for Heyron Agent Jam #1

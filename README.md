@@ -1,122 +1,210 @@
-# Memory Vault
+# Memory Companion
 
-A drop-in skill that gives any Heyron agent a structured, searchable memory system.
+An adaptive memory system that learns your preferences, auto-captures important details before context compression, and tailors itself to how you work.
 
 ## What It Does
 
-- **Auto-capture** — Tags important info (dates, numbers, decisions, action items) from conversations
-- **Structured storage** — Memories organized by category (people, projects, preferences, action_items, notes)
-- **Fast recall** — Search across all memory files with natural language queries
-- **Session continuity** — Summarizes prior session context when you wake up
+- **Auto-capture before compression** — Extracts key info (decisions, action items, facts) before context gets compressed
+- **User-defined triggers** — Captures what matters to YOU (dollar amounts, names, project keywords)
+- **Tailored setup** — First-run questionnaire customizes categories, keywords, and capture rules
+- **Session context on demand** — Get a summary of everything that happened before your next message
+
+## The Problem It Solves
+
+Telegram/Discord chats lose context when messages get compressed. By the time you say "remember this", the details are already gone.
+
+Memory Companion runs before each compression cycle and extracts:
+- **Decisions** — "We decided to go with Option B"
+- **Action items** — "I'll email the supplier"
+- **Key facts** — names, numbers, dates, URLs
+- **Files created** — anything new you mention
 
 ## Installation
 
-1. Drop this folder into `~/workspace/skills/memory-vault/`
-2. That's it — the skill commands are available immediately
+1. Drop this folder into `~/workspace/skills/memory-companion/`
+2. Run setup: `memory-companion setup`
+3. That's it — it learns as you use it
 
 ```bash
-# Example installation
-cp -r memory-vault ~/workspace/skills/
+cp -r memory-companion ~/workspace/skills/
 ```
 
 ## Quick Start
 
 ```bash
-# Capture a memory
-~/workspace/skills/memory-vault/scripts/capture.sh --category people --content "John prefers email over calls" --tags email,preference
+# First-time setup (answers questions about your preferences)
+~/workspace/skills/memory-companion/scripts/setup.sh
 
-# Search memories
-~/workspace/skills/memory-vault/scripts/recall.sh "John preference"
+# Quick capture - works like you'd naturally say it
+~/workspace/skills/memory-companion/scripts/remember.sh "Remember that John prefers detailed specs"
 
-# Get session summary
-~/workspace/skills/memory-vault/scripts/session-summary.sh
+# Get session summary before next message
+~/workspace/skills/memory-companion/scripts/context.sh
 
-# View stats
-~/workspace/skills/memory-vault/scripts/stats.sh
+# See what's being tracked
+~/workspace/skills/memory-companion/scripts/status.sh
 ```
 
 ## Commands
 
-### capture.sh
+### setup.sh
 
-Capture a memory entry.
+First-run wizard. Asks questions to tailor the skill to you.
 
 ```bash
-capture.sh --category <category> --content "<memory>" [--tags <tags>] [--importance <level>]
+./scripts/setup.sh
 ```
 
-**Categories:** people, projects, preferences, action_items, notes
+### remember.sh
 
-**Importance:** low, medium, high
+Quick capture — works like you'd naturally say it.
 
-**Tags:** Comma-separated (optional)
+```bash
+./scripts/remember.sh "John prefers detailed specs over quick summaries"
+```
+
+Automatically extracts: people, preferences, context
+
+### capture.sh
+
+Manual capture with explicit category.
+
+```bash
+./scripts/capture.sh --category finances --content "Site costs $500/yr"
+```
 
 ### recall.sh
 
-Search memories.
+Search your memories.
 
 ```bash
-recall.sh "<search query>"
+./scripts/recall.sh "John preference"
 ```
 
-### session-summary.sh
+### context.sh
 
-Get a summary of prior session.
+Get a summary of the current session — what was decided, what needs doing, key facts.
 
 ```bash
-session-summary.sh
+./scripts/context.sh
 ```
 
-### stats.sh
+### status.sh
 
-Show memory statistics.
+Show what's being tracked.
 
 ```bash
-stats.sh
+./scripts/status.sh
 ```
 
-## Auto-Capture Integration
+## How It Works
 
-Add this to your SOUL.md to enable "remember this" auto-capture:
+### User-Defined Triggers
 
-```markdown
-## Memory Vault Integration
-When user says "remember this" or "don't forget", call:
-memory-vault capture --category notes --content "<the thing to remember>" --importance high
+You decide what triggers capture. Defaults:
+- "remember" / "don't forget" / "note this"
+- Dollar amounts (e.g., "$500")
+- Project names you specify
+- "let's do" / "action item"
+
+### Adaptive Learning
+
+The more you use it, the smarter it gets. It learns:
+- Your categories
+- Your naming conventions
+- What you consider important
+
+## Setup Example
+
+```bash
+$ ./scripts/setup.sh
+
+Welcome to Memory Companion!
+Let's tailor this to how you work.
+
+What categories matter to you?
+(separated by commas, press enter for default)
+> people, projects, finances, dogs
+
+What keywords should trigger auto-capture?
+(comma-separated)
+> remember, don't forget, budget, dogs
+
+How aggressive should auto-capture be?
+[1] Aggressive [2] Balanced [3] Minimal
+> 2
+
+✓ Setup complete!
+```
+
+## Session Context Output
+
+```bash
+$ ./scripts/context.sh
+
+=== Session Context - 2026-04-27 ===
+
+Decisions:
+- Pooch Studios: Brighton vet space preferred
+- Memory Companion: rebuilding for hackathon
+
+Action Items:
+- Nick to call IRS tomorrow
+- Buddy to finish Memory Companion skill
+
+Key Facts:
+- Dog daycare: $40/day, $55/night
+- Startup capital: ~$145K
+- IRS payment issue pending
 ```
 
 ## File Structure
 
 ```
-memory-vault/
+memory-companion/
 ├── SKILL.md              # This file
 ├── README.md             # Installation & usage
 ├── scripts/
-│   ├── capture.sh        # Capture a memory
+│   ├── setup.sh          # First-run questionnaire
+│   ├── config.sh         # User preferences (generated)
+│   ├── remember.sh       # Quick capture with auto-parse
+│   ├── capture.sh        # Manual capture with categories
 │   ├── recall.sh         # Search memories
-│   ├── session-summary.sh # Summarize prior session
-│   └── stats.sh          # Show memory stats
-└── vault/
-    └── memories/         # Memory storage (created on first use)
+│   ├── context.sh        # Session summary
+│   └── status.sh         # Show what's tracked
+└── memory/
+    └── sessions/         # Where memories are stored
 ```
 
 ## Requirements
 
 - Bash 4+
 - jq (optional, for JSON parsing)
-- curl (optional, for web search integration)
 
-## Why This Is Useful
+## Portability
 
-- Never lose track of "remember this" requests
-- Quick lookup of client preferences, project status
-- Automatically surface relevant context when starting a new session
-- Portable — anyone can drop it into their workspace and use it
+This skill uses only existing OpenClaw tools:
+- `read`, `write`, `exec` for file operations
+- No external dependencies
+
+Drop into any Heyron workspace and run setup.
 
 ## License
 
-MIT License - feel free to use, modify, and distribute.
+MIT License
 
 ## Author
 
 Built for Heyron Agent Jam #1
+
+## Why This Is Different
+
+Most memory skills are vaults — they store things you explicitly save.
+
+Memory Companion is different:
+1. **Proactive** — captures before context is lost
+2. **Adaptive** — learns your preferences
+3. **Session-aware** — gives you context before each new message
+4. **User-defined** — you control what matters
+
+That's what makes it useful.

@@ -1,13 +1,13 @@
 #!/bin/bash
-# Memory Vault - Capture a memory entry
+# Memory Companion - Manual capture with category
 
 set -e
 
+MEMORY_DIR="${HOME}/.openclaw/workspace/skills/memory-companion/memory"
+CONFIG_FILE="${HOME}/.openclaw/workspace/skills/memory-companion/scripts/config.sh"
+
 CATEGORY=""
 CONTENT=""
-TAGS=""
-IMPORTANCE="medium"
-VAULT_DIR="${HOME}/.openclaw/workspace/skills/memory-vault/vault"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -20,63 +20,28 @@ while [[ $# -gt 0 ]]; do
       CONTENT="$2"
       shift 2
       ;;
-    --tags)
-      TAGS="$2"
-      shift 2
-      ;;
-    --importance)
-      IMPORTANCE="$2"
-      shift 2
-      ;;
     *)
-      echo "Unknown option: $1"
-      exit 1
+      shift
       ;;
   esac
 done
 
-# Validate required args
-if [[ -z "$CATEGORY" ]]; then
-  echo "Error: --category is required"
+if [[ -z "$CATEGORY" ]] || [[ -z "$CONTENT" ]]; then
+  echo "Usage: memory-companion capture --category <cat> --content \"<stuff>\""
   exit 1
 fi
 
-if [[ -z "$CONTENT" ]]; then
-  echo "Error: --content is required"
-  exit 1
-fi
+SESSION_FILE="$MEMORY_DIR/sessions/$(date +%Y-%m-%d).md"
+mkdir -p "$MEMORY_DIR/sessions"
 
-# Create vault directory if needed
-mkdir -p "$VAULT_DIR/memories"
-
-# Generate ID and timestamp
-ID=$(date +%s)
 TIMESTAMP=$(date -Iseconds)
-DATE=$(date +%Y-%m-%d)
+ID=$(date +%s)
 
-# Create memory entry
-MEMORY_FILE="$VAULT_DIR/memories/${DATE}.md"
+echo "## $ID | $CATEGORY" >> "$SESSION_FILE"
+echo "**Time:** $TIMESTAMP" >> "$SESSION_FILE"
+echo "**Content:** $CONTENT" >> "$SESSION_FILE"
+echo "" >> "$SESSION_FILE"
 
-# Build the entry
-ENTRY="## $ID | $CATEGORY | $IMPORTANCE"
-
-if [[ -n "$TAGS" ]]; then
-  ENTRY+=" | Tags: $TAGS"
-fi
-
-ENTRY+="
-**Timestamp:** $TIMESTAMP
-**Content:** $CONTENT
-
----
-
-"
-
-# Append to today's file
-echo "$ENTRY" >> "$MEMORY_FILE"
-
-echo "Memory captured successfully!"
+echo "✓ Captured!"
 echo "  Category: $CATEGORY"
-echo "  Importance: $IMPORTANCE"
-echo "  Tags: $TAGS"
-echo "  File: $MEMORY_FILE"
+echo "  Content: $CONTENT"
