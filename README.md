@@ -176,6 +176,23 @@ memory-companion/
     └── sessions/         # Where memories are stored
 ```
 
+## Pro Tips
+
+### Capture Before Compression
+At the start of each new conversation (or when you notice context getting thin), run:
+
+```bash
+memory-companion context
+```
+
+This gives you a summary of what was decided, action items, and key facts from the previous session — before any context is lost.
+
+### Quick Memory
+Just say "remember that <thing>" in conversation and the agent can call `remember.sh` to auto-capture it.
+
+### Periodic Check-In
+For proactive use, ask your agent to check in every ~10 messages: "Want me to save context?" — then run `context.sh` if yes.
+
 ## Requirements
 
 - Bash 4+
